@@ -1,9 +1,5 @@
 # AWS Auth
 
-## About
-
-This is a sample tool to make the AWS CLI authentication through environments easier.
-
 ## Motivation
 
 AWS DevOps administrators commonly manages at least three accounts: development, staging and production.
@@ -107,4 +103,28 @@ region = us-east-2
 [default]
 aws_access_key_id = DUMMY000DUMMY111DUMM
 aws_secret_access_key = dumMmY000dumMmY111dumMmY222dumMmY333dumM
+```
+
+## Install
+
+1 - For SSO
+
+```
+mkdir $HOME/sso && \
+curl --output $HOME/sso/aws-sso.sh "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/sso/aws-sso.sh" && \
+curl --output $HOME/sso/auth.config "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/sso/auth.config" && \
+chmod -R +x $HOME/sso && \
+echo 'export PATH="$HOME/sso/:$PATH"' >> $HOME/.bash_profile && \
+echo 'alias sso-aws="source $HOME/sso/sso-aws"' >> $HOME/.bash_profile
+```
+
+2 - For IAM
+
+```
+mkdir $HOME/iam && \
+curl --output $HOME/iam/aws-iam.sh "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/iam/aws-iam.sh" && \
+curl --output $HOME/iam/auth.config "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/iam/auth.config" && \
+chmod -R +x $HOME/iam && \
+echo 'export PATH="$HOME/iam/:$PATH"' >> $HOME/.bash_profile && \
+echo 'alias iam-aws="source $HOME/iam/iam-aws"' >> $HOME/.bash_profile
 ```
