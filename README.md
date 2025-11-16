@@ -2,18 +2,27 @@
 
 ## Motivation
 
-AWS DevOps administrators commonly manages at least three accounts: development, staging and production.
-Although all environment profile configuration stay in **~/.aws/**, switch between then via AWS CLI **--profile** argument cloud might be boring.
-Terraform and Terragrunt need AWS variable values for AWS Provider authentication, which AWS CLI does not export.
+AWS DevOps administrators commonly manage multiple accounts across different environments (development, staging, and production). While all profile configurations are stored in **~/.aws/config**, switching between accounts using the AWS CLI `--profile` argument for every command can be tedious and error-prone. For example: `aws s3 ls --profile dev-account`
 
-## Supported Authentication Types
+Additionally, many tools and applications require AWS credentials to be available as environment variables (such as `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, etc.) rather than relying on AWS CLI profile configurations. The AWS CLI doesn't automatically export these environment variables, which creates friction when working with tools that expect them.
 
-| Name | Description                             |
-|------|-----------------------------------------|
-| IAM  | Assume Role credentials provided by IAM |
-| SSO  | Credentials provided by Identity Center |
+This project simplifies the authentication workflow by providing a streamlined way to authenticate and automatically export the necessary environment variables, making it easier to switch between AWS accounts and work with various AWS tools seamlessly.
 
-## How to Use
+## Why SSO Authentication?
+
+Authentication via SSO (AWS IAM Identity Center, formerly AWS SSO) is a centralized and simplified way to access multiple AWS accounts and applications using a single corporate login.
+
+### Key Benefits
+
+- **Single sign-on:** no need to manage multiple passwords or keys for each AWS account.
+
+- **Centralized control:** permissions defined in one place and automatically applied across AWS accounts.
+
+- **Enhanced security:** native support for MFA (multi-factor authentication).
+
+- **Simplified CLI and console experience:** access through aws sso login and profiles configured in ~/.aws/config.
+
+## How to Configure
 
 ### Requirements(Unix/Bash)
 
@@ -26,105 +35,80 @@ Terraform and Terragrunt need AWS variable values for AWS Provider authenticatio
 
 1 - Create the AWS folder exists
 
-```
-$ mkdir ~/.aws
+```bash
+mkdir ~/.aws
 ```
 
 2 - Configure the **~/.aws/config** file
 
 2.1 - Create the file
 
-```
-$ touch ~/.aws/config
+```bash
+touch ~/.aws/config
 ```
 
-#### For SSO
-2.2 - Create the **~/.aws/config** content 
+2.2 - Create the **~/.aws/config** content
 
-```
+```conf
 ##### SSO Credentials Configuration #####
 #### General Session ####
-[sso-session piperoad]
-sso_start_url = https://d-0000000000.awsapps.com/start
-sso_region = us-east-1
-sso_registration_scopes = 111111111111
+[sso-session #{IAM_IDENTITY_NICKNAME}]
+sso_start_url = #{IAM_IDENTITY_START_URL}¹
+sso_region = #{IAM_IDENTITY_REGION}²
+sso_registration_scopes = #{IAM_IDENTITY_ACCOUNT_NUMBER}
 #### General Session ####
 
 ############################################################
 
 ### Account ###
 ## Profiles ##
-[profile account-role]
-sso_session = account-role
-sso_account_id = 111111111111
-sso_role_name = role
-region = us-east-1
+[profile #{TARGET_ACCOUNT_NICKNAME}³]
+sso_session = #{TARGET_ACCOUNT_NICKNAME}³
+sso_account_id = #{TARGET_ACCOUNT_ID}⁴
+sso_role_name = #{TARGET_ACCOUNT_ROLE}
+region = #{TARGET_ACCOUNT_REGION}
 output = json
 ## Profiles ##
 
 ## Sessions ##
-[sso-session account-role]
-sso_start_url = https://d-0000000000.awsapps.com/start
-sso_region = us-east-1
-sso_registration_scopes = 111111111111
+[sso-session #{TARGET_ACCOUNT_NICKNAME}³]
+sso_start_url = #{IAM_IDENTITY_START_URL}¹
+sso_region = #{IAM_IDENTITY_REGION}²
+sso_registration_scopes = #{TARGET_ACCOUNT_ID}⁴
 ## Sessions ##
 ### Account ###
 ```
 
-#### For IAM
-2.2 - Create the **~/.aws/config** content
-
-```
-##### Assume Role Credentials Configuration #####
-[default]
-region = us-east-2
-output = json
-
-[profile dev]
-role_arn = arn:aws:iam::111111111111:role/Administrator
-source_profile = default
-region = us-east-2
-
-[profile stg]
-role_arn = arn:aws:iam::222222222222:role/Administrator
-source_profile = default
-region = us-east-2
-
-[profile prod]
-role_arn = arn:aws:iam::333333333333:role/Administrator
-source_profile = default
-region = us-east-2
-##### Assume Role Credentials Configuration #####
-```
-
-2.3 - Create the **~/.aws/credentials** content
-
-```
-[default]
-aws_access_key_id = DUMMY000DUMMY111DUMM
-aws_secret_access_key = dumMmY000dumMmY111dumMmY222dumMmY333dumM
-```
+2.3 - You can optionally configure your access by generating the **~/.aws/config** file using the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html).
 
 ## Install
 
-1 - For SSO
-
-```
-mkdir $HOME/sso && \
-curl --output $HOME/sso/aws-sso.sh "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/sso/aws-sso.sh" && \
-curl --output $HOME/sso/auth.config "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/sso/auth.config" && \
-chmod -R +x $HOME/sso && \
-echo 'export PATH="$HOME/sso/:$PATH"' >> $HOME/.bash_profile && \
-echo 'alias sso-aws="source $HOME/sso/sso-aws"' >> $HOME/.bash_profile
+```bash
+mkdir $HOME/sso && curl --output $HOME/sso/aws-sso.sh "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/sso/aws-sso.sh" && \
+curl --output $HOME/sso/read-aws-config.sh "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/sso/read-aws-config.sh" && \
+chmod -R +x $HOME/sso && echo 'export PATH="$HOME/sso/:$PATH"' >> $HOME/.bash_profile && \
+echo 'alias sso-aws="source $HOME/sso/aws-sso.sh"' >> $HOME/.bash_profile && \
+source ~/.bash_profile
 ```
 
-2 - For IAM
+## How to Use
 
+1 - Invoke the `aws-sso` authenticator
+
+```bash
+aws-sso
 ```
-mkdir $HOME/iam && \
-curl --output $HOME/iam/aws-iam.sh "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/iam/aws-iam.sh" && \
-curl --output $HOME/iam/auth.config "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/iam/auth.config" && \
-chmod -R +x $HOME/iam && \
-echo 'export PATH="$HOME/iam/:$PATH"' >> $HOME/.bash_profile && \
-echo 'alias iam-aws="source $HOME/iam/iam-aws"' >> $HOME/.bash_profile
-```
+
+2 - Choose the profile
+
+![Choose Profile](docs/choose-profile.png)
+
+3 - Choose the region(**default:** us-east-2)
+
+![Choose Region](docs/choose-region.png)
+
+4 - Then you will be redirected to the browser for authentication allowance
+
+5 - If everything goes right, you might see the secessful prompt
+
+![Sucess Profile Login](docs/successful-profile-login.png)
