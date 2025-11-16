@@ -101,14 +101,14 @@ aws-sso
 
 2 - Choose the profile
 
-![Choose Profile](sso/docs/choose-profile.png)
+![Choose Profile](docs/choose-profile.png)
 
 3 - Choose the region(**default:** us-east-2)
 
-![Choose Region](sso/docs/choose-region.png)
+![Choose Region](docs/choose-region.png)
 
 4 - Then you will be redirected to the browser for authentication allowance
 
 5 - If everything goes right, you might see the secessful prompt
 
-![Sucess Profile Login](sso/docs/successful-profile-login.png)
+![Sucess Profile Login](docs/successful-profile-login.png)
