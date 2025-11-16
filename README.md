@@ -84,9 +84,10 @@ sso_registration_scopes = #{TARGET_ACCOUNT_ID}⁴
 ## Install
 
 ```bash
-mkdir $HOME/sso && curl --output $HOME/sso/aws-sso.sh "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/sso/aws-sso.sh" && \
+mkdir $HOME/sso && \
+curl --output $HOME/sso/aws-sso.sh "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/sso/aws-sso.sh" && \
 curl --output $HOME/sso/read-aws-config.sh "https://raw.githubusercontent.com/marquesmateus93/aws-auth/refs/heads/master/sso/read-aws-config.sh" && \
-chmod -R +x $HOME/sso && echo 'export PATH="$HOME/sso/:$PATH"' >> $HOME/.bash_profile && \
+chmod -R +x $HOME/sso \
 echo 'alias sso-aws="source $HOME/sso/aws-sso.sh"' >> $HOME/.bash_profile && \
 source ~/.bash_profile
 ```
